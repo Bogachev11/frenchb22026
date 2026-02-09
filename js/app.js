@@ -27,6 +27,7 @@ const App = () => {
 
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework, 0);
     const avgH = cw > 0 ? total / (cw * 7) : 0;
+    const streaks = data.filter(d => (d.podcasts + d.films) >= 4).length;
 
     // Mood data: daily dots + weekly average line
     const moodData = data.map(d => {
@@ -65,7 +66,7 @@ const App = () => {
             ),
             KPI(`${Math.round(total)}h`, 'Total Hours'),
             KPI(fmtH(avgH), 'Avg/Day'),
-            KPI('\u2014', 'TBD')
+            KPI(`${streaks}`, '4h Streaks')
         ),
 
         // Chart 1: Podcasts & Films
