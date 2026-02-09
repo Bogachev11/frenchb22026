@@ -12,6 +12,9 @@ jobs:
       id-token: write
     steps:
     - uses: actions/checkout@v4
+    - name: Inject API key
+      run: |
+        sed -i "s/window.__API_KEY__ = undefined/window.__API_KEY__ = '${{ secrets.GOOGLE_API_KEY }}'/g" index.html
     - uses: actions/configure-pages@v4
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
