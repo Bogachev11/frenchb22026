@@ -10,11 +10,6 @@
 .recharts-cartesian-axis-y .recharts-cartesian-axis-line { display: none !important; }
 .recharts-cartesian-axis-y line { display: none !important; }
 
-.recharts-wrapper {
-    margin-left: 25px !important;
-    transform: translateX(-15%) !important;
-}
-.recharts-surface { margin-left: 25px !important; }
 
 .recharts-cartesian-grid-horizontal line { stroke: #f9fafb; stroke-width: 1; }
 .recharts-cartesian-grid-vertical line { stroke: #f9fafb; stroke-width: 1; }

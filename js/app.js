@@ -64,7 +64,8 @@ const App = () => {
     });
 
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
-    const mg = { left: 5, right: 10, top: 5, bottom: 0 };
+    const mg = { left: 2, right: 10, top: 5, bottom: 0 };
+    const yAxisW = 28;
 
     return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen border border-gray-300 px-1' },
 
@@ -108,7 +109,7 @@ const App = () => {
                     e(ComposedChart, { data, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { domain: [0, 6], ticks: [0, 2, 4, 6], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
+                        e(YAxis, { width: yAxisW, domain: [0, 6], ticks: [0, 2, 4, 6], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
                         e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '6 3', strokeWidth: 1.5 }),
                         e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: 6 }),
                         e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: 6 })
@@ -129,7 +130,7 @@ const App = () => {
                     e(ComposedChart, { data, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { domain: [0, 4], ticks: [0, 1, 2, 3, 4], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
+                        e(YAxis, { width: yAxisW, domain: [0, 4], ticks: [0, 1, 2, 3, 4], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
                         e(Bar, { dataKey: 'tutor', stackId: 'a', fill: '#4A2CF5', barSize: 6 }),
                         e(Bar, { dataKey: 'homework', stackId: 'a', fill: '#4CC9F0', barSize: 6 })
                     )
@@ -143,7 +144,7 @@ const App = () => {
             e('div', { className: 'text-xs text-gray-500 px-2 mb-1' }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant'),
             e('div', { style: { height: 92 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(LineChart, { data: moodData, margin: { left: 5, right: 10, top: 9, bottom: 5 } },
+                    e(LineChart, { data: moodData, margin: { left: -5, right: 10, top: 9, bottom: 5 } },
                         e('defs', null,
                             e('linearGradient', { id: 'moodGradient', x1: '0', y1: '0', x2: '0', y2: '1' },
                                 e('stop', { offset: '0%', stopColor: '#3b82f6' }),
@@ -153,7 +154,7 @@ const App = () => {
                         ),
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
+                        e(YAxis, { width: yAxisW, domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
                         e(Line, { type: 'monotone', dataKey: 'weekAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: false }),
                         [0,1,2,3,4,5,6].map(j => e(Line, { key: j, dataKey: `m${j}`, stroke: 'transparent', strokeWidth: 0, dot: MoodDot, isAnimationActive: false }))
                     )
