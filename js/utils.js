@@ -1,12 +1,20 @@
+const PROJECT_START = new Date(2026, 1, 9); // Feb 9, 2026
+
 const getCurrentWeek = () => {
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 1);
     return Math.ceil(((now - start) / 86400000 + 1) / 7);
 };
 
-const formatHours = (h) => {
-    if (!h) return '0h';
-    return h % 1 === 0 ? `${h}h` : `${h.toFixed(1)}h`;
+const getCurrentDay = () => Math.max(1, Math.ceil((new Date() - PROJECT_START) / 86400000) + 1);
+
+const fmtH = (h) => {
+    if (!h) return '0';
+    const hrs = Math.floor(h);
+    const mins = Math.round((h - hrs) * 60);
+    if (hrs === 0) return `${mins}m`;
+    if (mins === 0) return `${hrs}h`;
+    return `${hrs}h${mins}m`;
 };
 
 const getMoodColor = (v) => {

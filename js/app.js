@@ -6,11 +6,11 @@ const generateMockData = () => {
     const n = getCurrentWeek();
     return Array.from({ length: n }, (_, i) => ({
         week: i + 1,
-        podcasts: +(Math.random() * 3).toFixed(1),
-        films: +(Math.random() * 2.5).toFixed(1),
-        tutor: +(Math.random() * 2 + 0.5).toFixed(1),
-        homework: +(Math.random() * 2).toFixed(1),
-        mood: Math.ceil(Math.random() * 5)
+        podcasts: +(Math.random() * 3.5).toFixed(1),
+        films: +(Math.random() * 3).toFixed(1),
+        tutor: +(Math.random() * 2.5 + 0.5).toFixed(1),
+        homework: +(Math.random() * 2.5).toFixed(1),
+        moods: Array.from({ length: 7 }, () => Math.ceil(Math.random() * 5))
     }));
 };
 
@@ -20,17 +20,11 @@ const KPI = (value, label) => e('div', { className: 'bg-gray-50 p-2 rounded-lg' 
     e('div', { className: 'text-xs text-gray-500' }, label)
 );
 
-const MoodDot = ({ cx, cy, payload }) => {
-    if (!payload || payload.mood == null) return null;
-    return e('circle', { cx, cy, r: 3, fill: getMoodColor(payload.mood), fillOpacity: 0.3 });
+const MoodDot = ({ cx, cy, value }) => {
+    if (value == null) return null;
+    return e('circle', { cx, cy, r: 3, fill: getMoodColor(value), fillOpacity: 0.3 });
 };
 
-const Legend = (items) => e('div', { className: 'flex gap-3' },
-    items.map(([color, label]) => e('div', { className: 'flex items-center gap-1', key: label },
-        e('div', { className: 'w-2.5 h-2.5 rounded-sm', style: { background: color } }),
-        e('span', { className: 'text-xs text-gray-500' }, label)
-    ))
-);
 
 // --- App ---
 const App = () => {
@@ -40,10 +34,12 @@ const App = () => {
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework, 0);
     const avg = cw > 0 ? (total / (cw * 7)).toFixed(1) : 0;
 
-    // Mood data with SMA (±2 weeks window)
+    // Mood data: 7 daily values per week + SMA from all daily values (±2 weeks)
     const moodData = data.map((d, i) => {
-        const win = data.slice(Math.max(0, i - 2), i + 3).map(w => w.mood).filter(v => v != null);
-        return { week: d.week, mood: d.mood, movingAvg: win.length ? win.reduce((a, b) => a + b, 0) / win.length : null };
+        const win = data.slice(Math.max(0, i - 2), i + 3).flatMap(w => w.moods);
+        const entry = { week: d.week, movingAvg: win.length ? win.reduce((a, b) => a + b, 0) / win.length : null };
+        d.moods.forEach((m, j) => { entry[`m${j}`] = m; });
+        return entry;
     });
 
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
@@ -52,9 +48,14 @@ const App = () => {
     return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen border border-gray-300 px-1' },
 
         // Header
-        e('div', { className: 'p-4 pb-2' },
-            e('h1', { className: 'text-3xl font-bold' }, 'French 2026'),
-            e('p', { className: 'text-base opacity-70' }, 'Year Tracker')
+        e('div', { className: 'p-4 pb-2 relative' },
+            e('h1', { className: 'text-3xl font-bold' }, 'French B2 in 1 year'),
+            e('p', { className: 'text-base opacity-70' }, `At least 4 hours of listening per week \u2022 Day ${getCurrentDay()}`),
+            // Update indicator (backend TBD)
+            e('div', { className: 'absolute top-5 right-4 flex items-center gap-1' },
+                e('div', { className: 'w-2 h-2 bg-blue-500 rounded-full animate-pulse' }),
+                e('span', { className: 'text-sm text-black opacity-70' }, 'upd 17m ago')
+            )
         ),
 
         // KPI cards
@@ -76,16 +77,17 @@ const App = () => {
 
         // Chart 1: Podcasts & Films
         e('div', { className: 'px-2 pb-1' },
-            e('div', { className: 'flex items-baseline justify-between px-2' },
-                e('span', { className: 'text-sm font-medium text-gray-700' }, 'Podcasts & Films'),
-                Legend([['#5189E9', 'Podcasts'], ['#F72585', 'Films']])
+            e('div', { className: 'text-sm font-medium text-gray-700 px-2' },
+                e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
+                ' & ',
+                e('span', { style: { color: '#F72585' } }, 'Films')
             ),
             e('div', { style: { height: 130 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
                     e(ComposedChart, { data, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { axisLine: false, fontSize: 12, tickFormatter: v => `${v}h` }),
+                        e(YAxis, { domain: [0, 6], ticks: [0, 2, 4, 6], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
                         e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '6 3', strokeWidth: 1.5 }),
                         e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: 6 }),
                         e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: 6 })
@@ -96,16 +98,17 @@ const App = () => {
 
         // Chart 2: Tutor & Homework
         e('div', { className: 'px-2 pb-1' },
-            e('div', { className: 'flex items-baseline justify-between px-2' },
-                e('span', { className: 'text-sm font-medium text-gray-700' }, 'Tutor & Homework'),
-                Legend([['#4A2CF5', 'Tutor'], ['#4CC9F0', 'Homework']])
+            e('div', { className: 'text-sm font-medium text-gray-700 px-2' },
+                e('span', { style: { color: '#4A2CF5' } }, 'Tutor'),
+                ' & ',
+                e('span', { style: { color: '#4CC9F0' } }, 'Homework')
             ),
             e('div', { style: { height: 130 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
                     e(ComposedChart, { data, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { axisLine: false, fontSize: 12, tickFormatter: v => `${v}h` }),
+                        e(YAxis, { domain: [0, 4], ticks: [0, 1, 2, 3, 4], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
                         e(Bar, { dataKey: 'tutor', stackId: 'a', fill: '#4A2CF5', barSize: 6 }),
                         e(Bar, { dataKey: 'homework', stackId: 'a', fill: '#4CC9F0', barSize: 6 })
                     )
@@ -131,9 +134,17 @@ const App = () => {
                         e(XAxis, xProps),
                         e(YAxis, { domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
                         e(Line, { type: 'monotone', dataKey: 'movingAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: false }),
-                        e(Line, { type: 'monotone', dataKey: 'mood', stroke: 'transparent', strokeWidth: 0, dot: MoodDot, connectNulls: false, isAnimationActive: false })
+                        [0,1,2,3,4,5,6].map(j => e(Line, { key: j, dataKey: `m${j}`, stroke: 'transparent', strokeWidth: 0, dot: MoodDot, isAnimationActive: false }))
                     )
                 )
+            )
+        ),
+
+        // Footer
+        e('div', { className: 'px-4 py-3 text-left border-t border-gray-200' },
+            e('div', { className: 'text-xs text-gray-500' },
+                'Started at 9 Feb, 2026 \u2022 Aleksandr Bogachev \u2022 \uD835\uDD4F ',
+                e('a', { href: 'https://x.com/bogachev_al', target: '_blank', rel: 'noopener noreferrer', className: 'text-gray-500 hover:text-gray-700 underline' }, 'bogachev_al')
             )
         )
     );
