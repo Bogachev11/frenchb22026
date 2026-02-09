@@ -9,9 +9,7 @@ const fetchData = async () => {
     const weeks = {};
     json.values.forEach(row => {
         if (!row[0]) return;
-        const date = new Date(row[0]);
-        const start = new Date(date.getFullYear(), 0, 1);
-        const wk = Math.ceil(((date - start) / 86400000 + 1) / 7);
+        const wk = weekOfYear(row[0]);
         if (!weeks[wk]) weeks[wk] = { podcasts: 0, movies: 0, tutor: 0, homework: 0, moods: [] };
         const w = weeks[wk];
         w.podcasts += (parseFloat(row[1]) || 0);

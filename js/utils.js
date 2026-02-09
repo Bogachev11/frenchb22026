@@ -1,12 +1,17 @@
 const PROJECT_START = new Date(2026, 1, 9); // Feb 9, 2026
 
-const getCurrentWeek = () => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 1);
-    return Math.ceil(((now - start) / 86400000 + 1) / 7);
+// ISO week number (Monday = start of week)
+const weekOfYear = (date) => {
+    const d = new Date(typeof date === 'string' ? date + 'T12:00:00' : +date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7); // nearest Thursday
+    const jan4 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - jan4) / 86400000 - 3 + (jan4.getDay() + 6) % 7) / 7);
 };
 
-const getCurrentDay = () => Math.max(1, Math.ceil((new Date() - PROJECT_START) / 86400000) + 1);
+const getCurrentWeek = () => weekOfYear(new Date());
+
+const getCurrentDay = () => Math.max(1, Math.ceil((new Date() - PROJECT_START) / 86400000));
 
 const fmtH = (h) => {
     if (!h) return '0';
@@ -24,10 +29,10 @@ const getMoodColor = (v) => {
     return '#1d4ed8';
 };
 
-// Week numbers where each month starts (2026)
+// ISO week of 1st of each month (2026)
 const MONTHS = [
-    [1,'Jan'], [5,'Feb'], [9,'Mar'], [13,'Apr'], [18,'May'], [22,'Jun'],
-    [26,'Jul'], [31,'Aug'], [35,'Sep'], [40,'Oct'], [44,'Nov'], [48,'Dec']
+    [1,'Jan'], [5,'Feb'], [9,'Mar'], [14,'Apr'], [18,'May'], [23,'Jun'],
+    [27,'Jul'], [31,'Aug'], [36,'Sep'], [40,'Oct'], [44,'Nov'], [49,'Dec']
 ];
 const MONTH_TICKS = MONTHS.map(m => m[0]);
 const fmtMonth = (week) => (MONTHS.find(m => m[0] === week) || [])[1] || '';

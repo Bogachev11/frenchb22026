@@ -1,0 +1,17 @@
+{
+  "name": "20260209_year_tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "recharts.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@playwright/test": "^1.58.2",
+    "playwright": "^1.58.2"
+  }
+}

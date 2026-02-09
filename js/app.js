@@ -7,9 +7,9 @@ const KPI = (value, label) => e('div', { className: 'bg-gray-50 p-2 rounded-lg' 
     e('div', { className: 'text-xs text-gray-500' }, label)
 );
 
-const MoodDot = ({ cx, cy, value }) => {
+const MoodDot = ({ cx, cy, value, index }) => {
     if (value == null) return null;
-    return e('circle', { cx, cy, r: 3, fill: getMoodColor(value), fillOpacity: 0.3 });
+    return e('circle', { key: index, cx, cy, r: 3, fill: getMoodColor(value), fillOpacity: 0.15 });
 };
 
 
@@ -26,12 +26,11 @@ const App = () => {
     if (loading) return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
 
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework, 0);
-    const avg = cw > 0 ? (total / (cw * 7)).toFixed(1) : 0;
+    const avgH = cw > 0 ? total / (cw * 7) : 0;
 
-    // Mood data: 7 daily values per week + SMA from all daily values (±2 weeks)
-    const moodData = data.map((d, i) => {
-        const win = data.slice(Math.max(0, i - 2), i + 3).flatMap(w => w.moods);
-        const entry = { week: d.week, movingAvg: win.length ? win.reduce((a, b) => a + b, 0) / win.length : null };
+    // Mood data: daily dots + weekly average line
+    const moodData = data.map(d => {
+        const entry = { week: d.week, weekAvg: d.moods.length ? d.moods.reduce((a, b) => a + b, 0) / d.moods.length : null };
         d.moods.forEach((m, j) => { entry[`m${j}`] = m; });
         return entry;
     });
@@ -65,7 +64,7 @@ const App = () => {
                 )
             ),
             KPI(`${Math.round(total)}h`, 'Total Hours'),
-            KPI(`${avg}h`, 'Avg/Day'),
+            KPI(fmtH(avgH), 'Avg/Day'),
             KPI('\u2014', 'TBD')
         ),
 
@@ -127,7 +126,7 @@ const App = () => {
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
-                        e(Line, { type: 'monotone', dataKey: 'movingAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: false }),
+                        e(Line, { type: 'monotone', dataKey: 'weekAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: false }),
                         [0,1,2,3,4,5,6].map(j => e(Line, { key: j, dataKey: `m${j}`, stroke: 'transparent', strokeWidth: 0, dot: MoodDot, isAnimationActive: false }))
                     )
                 )
@@ -137,7 +136,7 @@ const App = () => {
         // Footer
         e('div', { className: 'px-4 py-3 text-left border-t border-gray-200' },
             e('div', { className: 'text-xs text-gray-500' },
-                'Started at 9 Feb, 2026 \u2022 Aleksandr Bogachev \u2022 \uD835\uDD4F ',
+                'Started at 12 Jan, 2026 \u2022 Aleksandr Bogachev \u2022 \uD835\uDD4F ',
                 e('a', { href: 'https://x.com/bogachev_al', target: '_blank', rel: 'noopener noreferrer', className: 'text-gray-500 hover:text-gray-700 underline' }, 'bogachev_al')
             )
         )
