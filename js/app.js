@@ -110,7 +110,7 @@ const App = () => {
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { width: yAxisW, domain: [0, 6], ticks: [0, 2, 4, 6], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
-                        e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '6 3', strokeWidth: 1.5 }),
+                        e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '2 2', strokeWidth: 1.5 }),
                         e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: 6 }),
                         e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: 6 })
                     )
