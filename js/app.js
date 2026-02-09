@@ -1,19 +1,6 @@
 const e = React.createElement;
 const { ResponsiveContainer, ComposedChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = Recharts;
 
-// --- Mock data (will be replaced with Google Sheets) ---
-const generateMockData = () => {
-    const n = getCurrentWeek();
-    return Array.from({ length: n }, (_, i) => ({
-        week: i + 1,
-        podcasts: +(Math.random() * 3.5).toFixed(1),
-        films: +(Math.random() * 3).toFixed(1),
-        tutor: +(Math.random() * 2.5 + 0.5).toFixed(1),
-        homework: +(Math.random() * 2.5).toFixed(1),
-        moods: Array.from({ length: 7 }, () => Math.ceil(Math.random() * 5))
-    }));
-};
-
 // --- Small reusable pieces ---
 const KPI = (value, label) => e('div', { className: 'bg-gray-50 p-2 rounded-lg' },
     e('div', { className: 'text-xl font-bold text-gray-800 font-num' }, value),
@@ -28,8 +15,15 @@ const MoodDot = ({ cx, cy, value }) => {
 
 // --- App ---
 const App = () => {
-    const data = React.useMemo(generateMockData, []);
+    const [data, setData] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
     const cw = getCurrentWeek();
+
+    React.useEffect(() => {
+        fetchData().then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
 
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework, 0);
     const avg = cw > 0 ? (total / (cw * 7)).toFixed(1) : 0;
