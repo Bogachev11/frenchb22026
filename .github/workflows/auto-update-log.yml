@@ -1,0 +1,38 @@
+name: Auto Update Log
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  update-log:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.API_TOKEN }}
+    - name: Fetch and compare data
+      run: |
+        SHEET_ID="1z75gGNB8sLFZpUo81WEigIRgyuH6qnuzdKmvaWnOxus"
+        API_KEY="${{ secrets.GOOGLE_API_KEY }}"
+        RANGE="main!A2:F"
+
+        RESPONSE=$(curl -s "https://sheets.googleapis.com/v4/spreadsheets/$SHEET_ID/values/$RANGE?key=$API_KEY")
+        CURRENT_DATA=$(echo "$RESPONSE" | jq -c '.values // []')
+
+        if [ -f "update-log.json" ]; then
+          OLD_DATA=$(jq -c '.data // []' update-log.json)
+          if [ "$CURRENT_DATA" = "$OLD_DATA" ]; then
+            echo "No changes - skipping"
+            exit 0
+          fi
+        fi
+
+        UPDATE_TIME=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+        jq -n --arg t "$UPDATE_TIME" --argjson d "$CURRENT_DATA" \
+          '{lastUpdateTime: $t, data: $d}' > update-log.json
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add update-log.json
+        git diff --staged --quiet || (git commit -m "Auto-update log: $UPDATE_TIME" && git push)

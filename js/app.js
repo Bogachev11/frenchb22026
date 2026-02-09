@@ -14,14 +14,41 @@ const MoodDot = ({ cx, cy, value, index }) => {
 
 
 // --- App ---
+const getUpdateTimeText = (updateTime) => {
+    const now = new Date();
+    const diffMs = now - updateTime;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMin < 1) return 'just now';
+    if (diffHrs < 1) return `${diffMin}m ago`;
+    if (diffDays === 0) return `${diffHrs}h ago`;
+    if (diffDays === 1) return 'yesterday';
+    return '2+ days ago';
+};
+
 const App = () => {
     const [data, setData] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [lastUpdateTime, setLastUpdateTime] = React.useState(new Date(Date.now() - 86400000));
+    const [updText, setUpdText] = React.useState('');
     const cw = getCurrentWeek();
 
     React.useEffect(() => {
         fetchData().then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+        // Load update-log.json for last update time
+        fetch('./update-log.json').then(r => r.ok ? r.json() : null).then(d => {
+            if (d && d.lastUpdateTime) setLastUpdateTime(new Date(d.lastUpdateTime));
+        }).catch(() => {});
     }, []);
+
+    // Refresh "ago" text every 30s
+    React.useEffect(() => {
+        const tick = () => setUpdText(getUpdateTimeText(lastUpdateTime));
+        tick();
+        const id = setInterval(tick, 30000);
+        return () => clearInterval(id);
+    }, [lastUpdateTime]);
 
     if (loading) return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
 
@@ -48,7 +75,7 @@ const App = () => {
             // Update indicator (backend TBD)
             e('div', { className: 'absolute top-5 right-4 flex items-center gap-1' },
                 e('div', { className: 'w-2 h-2 bg-blue-500 rounded-full animate-pulse' }),
-                e('span', { className: 'text-sm text-black opacity-70' }, 'upd 17m ago')
+                e('span', { className: 'text-sm text-black opacity-70' }, `upd ${updText}`)
             )
         ),
 

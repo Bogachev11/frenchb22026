@@ -11,7 +11,11 @@ const weekOfYear = (date) => {
 
 const getCurrentWeek = () => weekOfYear(new Date());
 
-const getCurrentDay = () => Math.max(1, Math.ceil((new Date() - PROJECT_START) / 86400000));
+const getCurrentDay = () => {
+    const now = new Date();
+    const jan1 = new Date(now.getFullYear(), 0, 0);
+    return Math.floor((now - jan1) / 86400000);
+};
 
 const fmtH = (h) => {
     if (!h) return '0';
