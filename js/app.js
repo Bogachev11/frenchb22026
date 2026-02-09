@@ -1,5 +1,5 @@
 const e = React.createElement;
-const { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = Recharts;
+const { ResponsiveContainer, ComposedChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = Recharts;
 
 // --- Mock data (will be replaced with Google Sheets) ---
 const generateMockData = () => {
@@ -10,7 +10,7 @@ const generateMockData = () => {
         films: +(Math.random() * 2.5).toFixed(1),
         tutor: +(Math.random() * 2 + 0.5).toFixed(1),
         homework: +(Math.random() * 2).toFixed(1),
-        perception: +(2 + Math.random() * 3).toFixed(1)
+        mood: Math.ceil(Math.random() * 5)
     }));
 };
 
@@ -19,6 +19,11 @@ const KPI = (value, label) => e('div', { className: 'bg-gray-50 p-2 rounded-lg' 
     e('div', { className: 'text-xl font-bold text-gray-800 font-num' }, value),
     e('div', { className: 'text-xs text-gray-500' }, label)
 );
+
+const MoodDot = ({ cx, cy, payload }) => {
+    if (!payload || payload.mood == null) return null;
+    return e('circle', { cx, cy, r: 3, fill: getMoodColor(payload.mood), fillOpacity: 0.3 });
+};
 
 const Legend = (items) => e('div', { className: 'flex gap-3' },
     items.map(([color, label]) => e('div', { className: 'flex items-center gap-1', key: label },
@@ -34,6 +39,12 @@ const App = () => {
 
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework, 0);
     const avg = cw > 0 ? (total / (cw * 7)).toFixed(1) : 0;
+
+    // Mood data with SMA (±2 weeks window)
+    const moodData = data.map((d, i) => {
+        const win = data.slice(Math.max(0, i - 2), i + 3).map(w => w.mood).filter(v => v != null);
+        return { week: d.week, mood: d.mood, movingAvg: win.length ? win.reduce((a, b) => a + b, 0) / win.length : null };
+    });
 
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
     const mg = { left: 5, right: 10, top: 5, bottom: 0 };
@@ -102,16 +113,25 @@ const App = () => {
             )
         ),
 
-        // Chart 3: Language Perception
+        // Chart 3: How I feel about my french
         e('div', { className: 'px-2 pb-4' },
-            e('div', { className: 'text-sm font-medium text-gray-700 px-2' }, 'Language Perception'),
-            e('div', { style: { height: 100 } },
+            e('div', { className: 'text-sm font-medium text-gray-700 px-2' }, 'How I feel about my french'),
+            e('div', { className: 'text-xs text-gray-500 px-2 mb-1' }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant'),
+            e('div', { style: { height: 92 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data, margin: mg },
+                    e(LineChart, { data: moodData, margin: { left: 5, right: 10, top: 9, bottom: 5 } },
+                        e('defs', null,
+                            e('linearGradient', { id: 'moodGradient', x1: '0', y1: '0', x2: '0', y2: '1' },
+                                e('stop', { offset: '0%', stopColor: '#3b82f6' }),
+                                e('stop', { offset: '50%', stopColor: '#8b5cf6' }),
+                                e('stop', { offset: '100%', stopColor: '#ef4444' })
+                            )
+                        ),
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
-                        e(Line, { type: 'monotone', dataKey: 'perception', stroke: '#8b5cf6', strokeWidth: 2, dot: false, isAnimationActive: false })
+                        e(Line, { type: 'monotone', dataKey: 'movingAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: false }),
+                        e(Line, { type: 'monotone', dataKey: 'mood', stroke: 'transparent', strokeWidth: 0, dot: MoodDot, connectNulls: false, isAnimationActive: false })
                     )
                 )
             )

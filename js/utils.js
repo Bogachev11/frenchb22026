@@ -9,6 +9,13 @@ const formatHours = (h) => {
     return h % 1 === 0 ? `${h}h` : `${h.toFixed(1)}h`;
 };
 
+const getMoodColor = (v) => {
+    if (v <= 2) return '#ef4444';
+    if (v <= 3) return '#8b5cf6';
+    if (v <= 4) return '#3b82f6';
+    return '#1d4ed8';
+};
+
 // Week numbers where each month starts (2026)
 const MONTHS = [
     [1,'Jan'], [5,'Feb'], [9,'Mar'], [13,'Apr'], [18,'May'], [22,'Jun'],
