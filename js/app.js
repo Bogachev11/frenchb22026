@@ -139,10 +139,10 @@ const App = () => {
         ),
 
         // Chart 3: How I feel about my french
-        e('div', { className: 'px-2 pb-4' },
+        e('div', { className: 'px-2 pb-1' },
             e('div', { className: 'text-sm font-medium text-gray-700 px-2' }, 'How I feel about my french'),
             e('div', { className: 'text-xs text-gray-500 px-2 mb-1' }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant'),
-            e('div', { style: { height: 92 } },
+            e('div', { style: { height: 130 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
                     e(LineChart, { data: moodData, margin: { left: -5, right: 10, top: 9, bottom: 5 } },
                         e('defs', null,
