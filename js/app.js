@@ -51,22 +51,28 @@ const App = () => {
         return () => clearInterval(id);
     }, [lastUpdateTime]);
 
-    if (loading) return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
+    if (loading) return e('div', { className: 'max-w-md md:max-w-[1000px] mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
 
     const data = raw.weekly;
     const barData = mode === 'W' ? data : raw.daily;
-    const bSize = mode === 'W' ? 6 : 2;
+    const desktop = window.innerWidth >= 768;
+    const bSize = mode === 'D' ? (desktop ? 3 : 2) : (desktop ? 16 : 6);
 
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework + d.reading + d.speaking, 0);
     const avgH = cw > 0 ? total / (cw * 7) : 0;
     const streaks = data.filter(d => (d.podcasts + d.films) >= 4).length;
 
-    // Mood data: daily dots + weekly average line
-    const moodData = data.map(d => {
-        const entry = { week: d.week, weekAvg: d.moods.length ? d.moods.reduce((a, b) => a + b, 0) / d.moods.length : null };
-        d.moods.forEach((m, j) => { entry[`m${j}`] = m; });
-        return entry;
+    // Mood data: daily dots at correct day position + weekly average line
+    const moodData = [];
+    raw.daily.forEach(d => { moodData.push({ week: d.week, mood: d.mood }); });
+    data.forEach(d => {
+        const avg = d.moods.length ? d.moods.reduce((a, b) => a + b, 0) / d.moods.length : null;
+        if (avg == null) return;
+        const idx = moodData.findIndex(e => e.week === d.week);
+        if (idx >= 0) moodData[idx].weekAvg = avg;
+        else moodData.push({ week: d.week, weekAvg: avg });
     });
+    moodData.sort((a, b) => a.week - b.week);
 
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
     const mg = { left: 2, right: 10, top: 5, bottom: 0 };
@@ -80,7 +86,7 @@ const App = () => {
     const mkY = n => ({ width: yAxisW, domain: [0, n], ticks: mkTicks(n), axisLine: false, fontSize: 12, tickFormatter: fmtH });
     const cells = barData.map((d, i) => e(Cell, { key: i, fillOpacity: (d.wk ?? d.week) === cw ? 1 : 0.5 }));
 
-    return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen border border-gray-300 px-1' },
+    return e('div', { className: 'max-w-md md:max-w-[1000px] mx-auto bg-white min-h-screen border border-gray-300 px-1' },
 
         // Header
         e('div', { className: 'p-4 pb-2 relative' },
@@ -94,7 +100,7 @@ const App = () => {
         ),
 
         // KPI cards
-        e('div', { className: 'grid grid-cols-4 gap-2 px-4 pb-3' },
+        e('div', { className: 'grid grid-cols-4 gap-2 px-4 pb-3 max-w-lg' },
             // Week card with progress bar
             e('div', { className: 'bg-gray-50 p-2 rounded-lg flex items-center gap-2' },
                 e('div', null,
@@ -118,7 +124,7 @@ const App = () => {
                     ' & ',
                     e('span', { style: { color: '#F72585' } }, 'Films')
                 ),
-                e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
+                e('div', { className: 'hidden md:flex text-xs rounded overflow-hidden border border-gray-300' },
                     e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
                     e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
                 )
@@ -194,8 +200,8 @@ const App = () => {
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { width: yAxisW, domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
-                        e(Line, { type: 'monotone', dataKey: 'weekAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: false }),
-                        [0,1,2,3,4,5,6].map(j => e(Line, { key: j, dataKey: `m${j}`, stroke: 'transparent', strokeWidth: 0, dot: MoodDot, isAnimationActive: false }))
+                        e(Line, { dataKey: 'mood', stroke: 'transparent', strokeWidth: 0, dot: MoodDot, isAnimationActive: false }),
+                        e(Line, { type: 'monotone', dataKey: 'weekAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: true })
                     )
                 )
             )

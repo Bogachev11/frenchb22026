@@ -15,7 +15,8 @@ const fetchData = async () => {
         const p = (parseFloat(row[1]) || 0), f = (parseFloat(row[2]) || 0),
               t = (parseFloat(row[3]) || 0), h = (parseFloat(row[4]) || 0),
               r = (parseFloat(row[6]) || 0), s = (parseFloat(row[7]) || 0);
-        daily.push({ week: wk + dow / 7, wk, podcasts: p/60, films: f/60, tutor: t/60, homework: h/60, reading: r/60, speaking: s/60 });
+        const mood = (row[5] !== undefined && row[5] !== '') ? parseFloat(row[5]) : null;
+        daily.push({ week: wk + dow / 7, wk, podcasts: p/60, films: f/60, tutor: t/60, homework: h/60, reading: r/60, speaking: s/60, mood });
 
         if (!weeks[wk]) weeks[wk] = { podcasts: 0, movies: 0, tutor: 0, homework: 0, reading: 0, speaking: 0, moods: [] };
         const w = weeks[wk];
