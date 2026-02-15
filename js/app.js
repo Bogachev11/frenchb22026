@@ -28,14 +28,15 @@ const getUpdateTimeText = (updateTime) => {
 };
 
 const App = () => {
-    const [data, setData] = React.useState([]);
+    const [raw, setRaw] = React.useState({ weekly: [], daily: [] });
     const [loading, setLoading] = React.useState(true);
+    const [mode, setMode] = React.useState('W');
     const [lastUpdateTime, setLastUpdateTime] = React.useState(new Date(Date.now() - 86400000));
     const [updText, setUpdText] = React.useState('');
     const cw = getCurrentWeek();
 
     React.useEffect(() => {
-        fetchData().then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+        fetchData().then(d => { setRaw(d); setLoading(false); }).catch(() => setLoading(false));
         // Load update-log.json for last update time
         fetch('./update-log.json').then(r => r.ok ? r.json() : null).then(d => {
             if (d && d.lastUpdateTime) setLastUpdateTime(new Date(d.lastUpdateTime));
@@ -52,6 +53,10 @@ const App = () => {
 
     if (loading) return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
 
+    const data = raw.weekly;
+    const barData = mode === 'W' ? data : raw.daily;
+    const bSize = mode === 'W' ? 6 : 2;
+
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework + d.reading + d.speaking, 0);
     const avgH = cw > 0 ? total / (cw * 7) : 0;
     const streaks = data.filter(d => (d.podcasts + d.films) >= 4).length;
@@ -66,14 +71,14 @@ const App = () => {
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
     const mg = { left: 2, right: 10, top: 5, bottom: 0 };
     const yAxisW = 28;
-    const pph = 20, yPad = 25; // pixels per hour + fixed overhead (margins + X-axis labels)
+    const pph = 20, yPad = 30; // pixels per hour + fixed overhead (margins + X-axis labels)
     const ceilMax = (vals, min) => Math.max(min, Math.ceil(Math.max(...vals, 0)));
-    const maxPF = ceilMax(data.map(d => d.podcasts + d.films), 5);
-    const maxTH = ceilMax(data.map(d => d.tutor + d.homework), 1);
-    const maxRS = ceilMax(data.map(d => d.reading + d.speaking), 1);
+    const maxPF = ceilMax(barData.map(d => d.podcasts + d.films), mode === 'W' ? 5 : 1);
+    const maxTH = ceilMax(barData.map(d => d.tutor + d.homework), 1);
+    const maxRS = ceilMax(barData.map(d => d.reading + d.speaking), 1);
     const mkTicks = n => { const s = n > 4 ? 2 : 1, t = []; for (let i = 0; i <= n; i += s) t.push(i); return t; };
     const mkY = n => ({ width: yAxisW, domain: [0, n], ticks: mkTicks(n), axisLine: false, fontSize: 12, tickFormatter: fmtH });
-    const cells = data.map((d, i) => e(Cell, { key: i, fillOpacity: d.week === cw ? 1 : 0.5 }));
+    const cells = barData.map((d, i) => e(Cell, { key: i, fillOpacity: (d.wk ?? d.week) === cw ? 1 : 0.5 }));
 
     return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen border border-gray-300 px-1' },
 
@@ -107,20 +112,26 @@ const App = () => {
 
         // Chart 1: Podcasts & Films
         e('div', { className: 'px-2 pb-1' },
-            e('div', { className: 'text-sm font-medium text-gray-700 px-2' },
-                e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
-                ' & ',
-                e('span', { style: { color: '#F72585' } }, 'Films')
+            e('div', { className: 'flex justify-between items-center px-2' },
+                e('div', { className: 'text-sm font-medium text-gray-700' },
+                    e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
+                    ' & ',
+                    e('span', { style: { color: '#F72585' } }, 'Films')
+                ),
+                e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
+                    e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
+                    e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
+                )
             ),
             e('div', { style: { height: maxPF * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data, margin: mg },
+                    e(ComposedChart, { data: barData, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, mkY(maxPF)),
                         e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '2 2', strokeWidth: 1.5 }),
-                        e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: 6 }, cells),
-                        e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: 6 }, cells)
+                        e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: bSize }, cells),
+                        e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: bSize }, cells)
                     )
                 )
             )
@@ -135,12 +146,12 @@ const App = () => {
             ),
             e('div', { style: { height: maxTH * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data, margin: mg },
+                    e(ComposedChart, { data: barData, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, mkY(maxTH)),
-                        e(Bar, { dataKey: 'tutor', stackId: 'a', fill: '#4A2CF5', barSize: 6 }, cells),
-                        e(Bar, { dataKey: 'homework', stackId: 'a', fill: '#4CC9F0', barSize: 6 }, cells)
+                        e(Bar, { dataKey: 'tutor', stackId: 'a', fill: '#4A2CF5', barSize: bSize }, cells),
+                        e(Bar, { dataKey: 'homework', stackId: 'a', fill: '#4CC9F0', barSize: bSize }, cells)
                     )
                 )
             )
@@ -155,12 +166,12 @@ const App = () => {
             ),
             e('div', { style: { height: maxRS * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data, margin: mg },
+                    e(ComposedChart, { data: barData, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, mkY(maxRS)),
-                        e(Bar, { dataKey: 'reading', stackId: 'a', fill: '#9378FF', barSize: 6 }, cells),
-                        e(Bar, { dataKey: 'speaking', stackId: 'a', fill: '#4caf50', barSize: 6 }, cells)
+                        e(Bar, { dataKey: 'reading', stackId: 'a', fill: '#9378FF', barSize: bSize }, cells),
+                        e(Bar, { dataKey: 'speaking', stackId: 'a', fill: '#4caf50', barSize: bSize }, cells)
                     )
                 )
             )
