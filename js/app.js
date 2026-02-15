@@ -62,17 +62,17 @@ const App = () => {
     const avgH = cw > 0 ? total / (cw * 7) : 0;
     const streaks = data.filter(d => (d.podcasts + d.films) >= 4).length;
 
-    // Mood data: daily dots at correct day position + weekly average line
-    const moodData = [];
-    raw.daily.forEach(d => { moodData.push({ week: d.week, mood: d.mood }); });
-    data.forEach(d => {
-        const avg = d.moods.length ? d.moods.reduce((a, b) => a + b, 0) / d.moods.length : null;
-        if (avg == null) return;
-        const idx = moodData.findIndex(e => e.week === d.week);
-        if (idx >= 0) moodData[idx].weekAvg = avg;
-        else moodData.push({ week: d.week, weekAvg: avg });
+    // Mood data: daily dots + 7-day rolling average
+    const moodData = [], moodBuf = [];
+    raw.daily.forEach(d => {
+        const entry = { week: d.week };
+        if (d.mood != null) {
+            entry.mood = d.mood;
+            moodBuf.push(d.mood);
+            entry.avg = moodBuf.slice(-7).reduce((a, b) => a + b, 0) / Math.min(moodBuf.length, 7);
+        }
+        moodData.push(entry);
     });
-    moodData.sort((a, b) => a.week - b.week);
 
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
     const mg = { left: 2, right: 10, top: 5, bottom: 0 };
@@ -201,7 +201,7 @@ const App = () => {
                         e(XAxis, xProps),
                         e(YAxis, { width: yAxisW, domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
                         e(Line, { dataKey: 'mood', stroke: 'transparent', strokeWidth: 0, dot: MoodDot, isAnimationActive: false }),
-                        e(Line, { type: 'monotone', dataKey: 'weekAvg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: true })
+                        e(Line, { type: 'monotone', dataKey: 'avg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: true })
                     )
                 )
             )
