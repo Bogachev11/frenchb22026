@@ -1,5 +1,5 @@
 const e = React.createElement;
-const { ResponsiveContainer, ComposedChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = Recharts;
+const { ResponsiveContainer, ComposedChart, LineChart, Bar, Cell, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = Recharts;
 
 // --- Small reusable pieces ---
 const KPI = (value, label) => e('div', { className: 'bg-gray-50 p-2 rounded-lg' },
@@ -52,7 +52,7 @@ const App = () => {
 
     if (loading) return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
 
-    const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework, 0);
+    const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework + d.reading + d.speaking, 0);
     const avgH = cw > 0 ? total / (cw * 7) : 0;
     const streaks = data.filter(d => (d.podcasts + d.films) >= 4).length;
 
@@ -66,6 +66,14 @@ const App = () => {
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
     const mg = { left: 2, right: 10, top: 5, bottom: 0 };
     const yAxisW = 28;
+    const pph = 20, yPad = 25; // pixels per hour + fixed overhead (margins + X-axis labels)
+    const ceilMax = (vals, min) => Math.max(min, Math.ceil(Math.max(...vals, 0)));
+    const maxPF = ceilMax(data.map(d => d.podcasts + d.films), 5);
+    const maxTH = ceilMax(data.map(d => d.tutor + d.homework), 1);
+    const maxRS = ceilMax(data.map(d => d.reading + d.speaking), 1);
+    const mkTicks = n => { const s = n > 4 ? 2 : 1, t = []; for (let i = 0; i <= n; i += s) t.push(i); return t; };
+    const mkY = n => ({ width: yAxisW, domain: [0, n], ticks: mkTicks(n), axisLine: false, fontSize: 12, tickFormatter: fmtH });
+    const cells = data.map((d, i) => e(Cell, { key: i, fillOpacity: d.week === cw ? 1 : 0.5 }));
 
     return e('div', { className: 'max-w-md mx-auto bg-white min-h-screen border border-gray-300 px-1' },
 
@@ -104,15 +112,15 @@ const App = () => {
                 ' & ',
                 e('span', { style: { color: '#F72585' } }, 'Films')
             ),
-            e('div', { style: { height: 130 } },
+            e('div', { style: { height: maxPF * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
                     e(ComposedChart, { data, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { width: yAxisW, domain: [0, 6], ticks: [0, 2, 4, 6], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
+                        e(YAxis, mkY(maxPF)),
                         e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '2 2', strokeWidth: 1.5 }),
-                        e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: 6 }),
-                        e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: 6 })
+                        e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: 6 }, cells),
+                        e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: 6 }, cells)
                     )
                 )
             )
@@ -125,24 +133,44 @@ const App = () => {
                 ' & ',
                 e('span', { style: { color: '#4CC9F0' } }, 'Homework')
             ),
-            e('div', { style: { height: 130 } },
+            e('div', { style: { height: maxTH * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
                     e(ComposedChart, { data, margin: mg },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { width: yAxisW, domain: [0, 4], ticks: [0, 1, 2, 3, 4], axisLine: false, fontSize: 12, tickFormatter: fmtH }),
-                        e(Bar, { dataKey: 'tutor', stackId: 'a', fill: '#4A2CF5', barSize: 6 }),
-                        e(Bar, { dataKey: 'homework', stackId: 'a', fill: '#4CC9F0', barSize: 6 })
+                        e(YAxis, mkY(maxTH)),
+                        e(Bar, { dataKey: 'tutor', stackId: 'a', fill: '#4A2CF5', barSize: 6 }, cells),
+                        e(Bar, { dataKey: 'homework', stackId: 'a', fill: '#4CC9F0', barSize: 6 }, cells)
                     )
                 )
             )
         ),
 
-        // Chart 3: How I feel about my french
+        // Chart 3: Reading & Speaking
+        e('div', { className: 'px-2 pb-1' },
+            e('div', { className: 'text-sm font-medium text-gray-700 px-2' },
+                e('span', { style: { color: '#9378FF' } }, 'Reading'),
+                ' & ',
+                e('span', { style: { color: '#4caf50' } }, 'Speaking')
+            ),
+            e('div', { style: { height: maxRS * pph + yPad } },
+                e(ResponsiveContainer, { width: '100%', height: '100%' },
+                    e(ComposedChart, { data, margin: mg },
+                        e(CartesianGrid, { vertical: false }),
+                        e(XAxis, xProps),
+                        e(YAxis, mkY(maxRS)),
+                        e(Bar, { dataKey: 'reading', stackId: 'a', fill: '#9378FF', barSize: 6 }, cells),
+                        e(Bar, { dataKey: 'speaking', stackId: 'a', fill: '#4caf50', barSize: 6 }, cells)
+                    )
+                )
+            )
+        ),
+
+        // Chart 4: How I feel about my french
         e('div', { className: 'px-2 pb-1' },
             e('div', { className: 'text-sm font-medium text-gray-700 px-2' }, 'How I feel about my french'),
             e('div', { className: 'text-xs text-gray-500 px-2 mb-1' }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant'),
-            e('div', { style: { height: 130 } },
+            e('div', { style: { height: 85 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
                     e(LineChart, { data: moodData, margin: { left: -5, right: 10, top: 9, bottom: 5 } },
                         e('defs', null,

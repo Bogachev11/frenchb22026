@@ -10,13 +10,15 @@ const fetchData = async () => {
     json.values.forEach(row => {
         if (!row[0]) return;
         const wk = weekOfYear(row[0]);
-        if (!weeks[wk]) weeks[wk] = { podcasts: 0, movies: 0, tutor: 0, homework: 0, moods: [] };
+        if (!weeks[wk]) weeks[wk] = { podcasts: 0, movies: 0, tutor: 0, homework: 0, reading: 0, speaking: 0, moods: [] };
         const w = weeks[wk];
         w.podcasts += (parseFloat(row[1]) || 0);
         w.movies += (parseFloat(row[2]) || 0);
         w.tutor += (parseFloat(row[3]) || 0);
         w.homework += (parseFloat(row[4]) || 0);
         if (row[5] !== undefined && row[5] !== '') w.moods.push(parseFloat(row[5]));
+        w.reading += (parseFloat(row[6]) || 0);
+        w.speaking += (parseFloat(row[7]) || 0);
     });
 
     // Convert minutes → hours, return sorted array
@@ -26,6 +28,8 @@ const fetchData = async () => {
         films: d.movies / 60,
         tutor: d.tutor / 60,
         homework: d.homework / 60,
+        reading: d.reading / 60,
+        speaking: d.speaking / 60,
         moods: d.moods
     })).sort((a, b) => a.week - b.week);
 };

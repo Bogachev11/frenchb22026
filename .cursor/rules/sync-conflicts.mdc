@@ -1,0 +1,19 @@
+---
+description: Handle cloud sync conflicted copies before git operations
+globs: 
+alwaysApply: true
+---
+
+# Cloud Sync Conflicts
+
+This project lives in a cloud-synced folder (d:\Sync\). The sync tool creates "conflicted copy" files (e.g. `file (LAPTOP-XXX conflicted copy 2026-...).ext`) both in the working tree and inside `.git/`.
+
+## Before any git commit or push:
+
+1. Find and delete all conflicted copies:
+   - Use `Glob` with pattern `**/*conflicted*` in both the project root AND `.git/` directory
+   - Delete all found files
+2. Only then proceed with `git add`, `commit`, `push`
+
+## If `git pull` or `git push` fails with "bad object" or "did not send all necessary objects":
+- Check `.git/` for conflicted copies, delete them, retry

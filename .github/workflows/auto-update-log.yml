@@ -15,7 +15,7 @@ jobs:
       run: |
         SHEET_ID="1z75gGNB8sLFZpUo81WEigIRgyuH6qnuzdKmvaWnOxus"
         API_KEY="${{ secrets.GOOGLE_API_KEY }}"
-        RANGE="main!A2:F"
+        RANGE="main!A2:H"
 
         RESPONSE=$(curl -s "https://sheets.googleapis.com/v4/spreadsheets/$SHEET_ID/values/$RANGE?key=$API_KEY")
         CURRENT_DATA=$(echo "$RESPONSE" | jq -c '.values // []')
