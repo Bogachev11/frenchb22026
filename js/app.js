@@ -1,5 +1,5 @@
 const e = React.createElement;
-const { ResponsiveContainer, ComposedChart, LineChart, Bar, Cell, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = Recharts;
+const { ResponsiveContainer, ComposedChart, LineChart, Bar, Cell, Customized, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = Recharts;
 
 // --- Small reusable pieces ---
 const KPI = (value, label) => e('div', { className: 'bg-gray-50 p-2 rounded-lg' },
@@ -85,6 +85,31 @@ const App = () => {
     const mkTicks = n => { const s = n > 4 ? 2 : 1, t = []; for (let i = 0; i <= n; i += s) t.push(i); return t; };
     const mkY = n => ({ width: yAxisW, domain: [0, n], ticks: mkTicks(n), axisLine: false, fontSize: 12, tickFormatter: fmtH });
     const cells = barData.map((d, i) => e(Cell, { key: i, fillOpacity: (d.wk ?? d.week) === cw ? 1 : 0.5 }));
+    const PFNotesLayer = (props) => {
+        if (mode !== 'W' || typeof ANNOTATIONS === 'undefined' || !ANNOTATIONS.PF) return null;
+        const xa = props.xAxisMap && Object.values(props.xAxisMap)[0];
+        const ya = props.yAxisMap && Object.values(props.yAxisMap)[0];
+        if (!xa || !ya || !xa.scale || !ya.scale) return null;
+        return e('g', null,
+            Object.entries(ANNOTATIONS.PF).map(([wk, txt]) => {
+                const ww = +wk;
+                const row = data.find(d => d.week === ww);
+                if (!row) return null;
+                return e('text', {
+                    key: `pfn-${wk}`,
+                    x: xa.scale(ww) + (desktop ? 10 : 6),
+                    y: ya.scale(row.podcasts + row.films) + 2,
+                    fill: '#111',
+                    stroke: '#fff',
+                    strokeWidth: 3,
+                    paintOrder: 'stroke fill',
+                    fontSize: 12,
+                    dominantBaseline: 'hanging',
+                    textAnchor: 'start'
+                }, txt);
+            })
+        );
+    };
 
     return e('div', { className: 'max-w-md md:max-w-[1000px] mx-auto bg-white min-h-screen border border-gray-300 px-1' },
 
@@ -137,7 +162,8 @@ const App = () => {
                         e(YAxis, mkY(maxPF)),
                         e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '2 2', strokeWidth: 1.5 }),
                         e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: bSize }, cells),
-                        e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: bSize }, cells)
+                        e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: bSize }, cells),
+                        e(Customized, { component: PFNotesLayer })
                     )
                 )
             )
