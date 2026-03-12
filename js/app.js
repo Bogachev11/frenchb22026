@@ -65,8 +65,9 @@ const App = () => {
 
     if (loading) return e('div', { className: 'max-w-md md:max-w-[1000px] mx-auto bg-white min-h-screen flex items-center justify-center text-gray-400' }, 'Loading...');
 
-    const data = raw.weekly;
-    const barData = mode === 'W' ? data : raw.daily;
+    const data = Array.isArray(raw.weekly) ? raw.weekly : [];
+    const daily = Array.isArray(raw.daily) ? raw.daily : [];
+    const barData = mode === 'W' ? data : daily;
     const desktop = window.innerWidth >= 768;
     const bSize = mode === 'D' ? (desktop ? 10 : 6) : (desktop ? 16 : 6);
 
@@ -76,7 +77,7 @@ const App = () => {
 
     // Mood data: daily dots + 7-day rolling average
     const moodData = [], moodBuf = [];
-    raw.daily.forEach(d => {
+    daily.forEach(d => {
         const entry = { week: d.week };
         if (d.mood != null) {
             entry.mood = d.mood;
@@ -86,6 +87,8 @@ const App = () => {
         moodData.push(entry);
     });
 
+    const chartData = barData.length > 0 ? barData : [{ week: 1, podcasts: 0, films: 0, tutor: 0, homework: 0, reading: 0, speaking: 0 }];
+    const moodChartData = moodData.length > 0 ? moodData : [{ week: 1, mood: null, avg: null }];
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
     const mg = { left: 2, right: 10, top: 5, bottom: 0 };
     const yAxisW = 28;
@@ -97,7 +100,7 @@ const App = () => {
     const maxPFW = ceilMax(data.map(d => d.podcasts + d.films), 5), maxTHW = ceilMax(data.map(d => d.tutor + d.homework), 1), maxRSW = ceilMax(data.map(d => d.reading + d.speaking), 1);
     const mkTicks = n => { const s = n > 4 ? 2 : 1, t = []; for (let i = 0; i <= n; i += s) t.push(i); return t; };
     const mkY = n => ({ width: yAxisW, domain: [0, n], ticks: mkTicks(n), axisLine: false, fontSize: 12, tickFormatter: fmtH });
-    const cells = barData.map((d, i) => e(Cell, { key: i, fillOpacity: (d.wk ?? d.week) === cw ? 1 : 0.5 }));
+    const cells = chartData.map((d, i) => e(Cell, { key: i, fillOpacity: (d.wk ?? d.week) === cw ? 1 : 0.5 }));
     const PFNotesLayer = (props) => {
         if (mode !== 'W' || typeof ANNOTATIONS === 'undefined' || !ANNOTATIONS.PF) return null;
         const xa = props.xAxisMap && Object.values(props.xAxisMap)[0];
@@ -170,7 +173,7 @@ const App = () => {
                     ),
                     e('div', { style: { height: maxPF * pph + yPad } },
                         e(ResponsiveContainer, { width: '100%', height: '100%' },
-                            e(ComposedChart, { data: barData, margin: mg },
+                            e(ComposedChart, { data: chartData, margin: mg },
                                 e(CartesianGrid, { vertical: false }),
                                 e(XAxis, xProps),
                                 e(YAxis, { ...mkY(maxPF), axisLine: false }),
@@ -190,7 +193,7 @@ const App = () => {
                     ),
                     e('div', { style: { height: maxTH * pph + yPad } },
                         e(ResponsiveContainer, { width: '100%', height: '100%' },
-                            e(ComposedChart, { data: barData, margin: mg },
+                            e(ComposedChart, { data: chartData, margin: mg },
                                 e(CartesianGrid, { vertical: false }),
                                 e(XAxis, xProps),
                                 e(YAxis, { ...mkY(maxTH), axisLine: false }),
@@ -208,7 +211,7 @@ const App = () => {
                     ),
                     e('div', { style: { height: maxRS * pph + yPad } },
                         e(ResponsiveContainer, { width: '100%', height: '100%' },
-                            e(ComposedChart, { data: barData, margin: mg },
+                            e(ComposedChart, { data: chartData, margin: mg },
                                 e(CartesianGrid, { vertical: false }),
                                 e(XAxis, xProps),
                                 e(YAxis, { ...mkY(maxRS), axisLine: false }),
@@ -223,7 +226,7 @@ const App = () => {
                     e('div', { className: 'text-xs text-gray-500 px-2 pb-0.5' }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant'),
                     e('div', { style: { height: 85 } },
                         e(ResponsiveContainer, { width: '100%', height: '100%' },
-                            e(LineChart, { data: moodData, margin: { left: 0, right: 10, top: 9, bottom: 5 } },
+                            e(LineChart, { data: moodChartData, margin: { left: 0, right: 10, top: 9, bottom: 5 } },
                                 e('defs', null,
                                     e('linearGradient', { id: 'moodGradient', x1: '0', y1: '0', x2: '0', y2: '1' },
                                         e('stop', { offset: '0%', stopColor: '#3b82f6' }),
@@ -263,7 +266,7 @@ const App = () => {
             ),
             e('div', { style: { flex: 1, minWidth: 0, height: maxPFW * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 }, barCategoryGap: 0, barGap: 0 },
+                    e(ComposedChart, { data: chartData, margin: { ...mg, left: 0 } },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { ...mkY(maxPF), width: 0, tick: false }),
@@ -290,7 +293,7 @@ const App = () => {
             ),
             e('div', { style: { flex: 1, minWidth: 0, height: maxTHW * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 }, barCategoryGap: 0, barGap: 0 },
+                    e(ComposedChart, { data: chartData, margin: { ...mg, left: 0 } },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { ...mkY(maxTH), width: 0, tick: false }),
@@ -315,7 +318,7 @@ const App = () => {
             ),
             e('div', { style: { flex: 1, minWidth: 0, height: maxRSW * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 }, barCategoryGap: 0, barGap: 0 },
+                    e(ComposedChart, { data: chartData, margin: { ...mg, left: 0 } },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { ...mkY(maxRS), width: 0, tick: false }),
@@ -337,7 +340,7 @@ const App = () => {
             ),
             e('div', { style: { flex: 1, minWidth: 0, height: 85 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(LineChart, { data: moodData, margin: { left: 0, right: 10, top: 9, bottom: 5 } },
+                    e(LineChart, { data: moodChartData, margin: { left: 0, right: 10, top: 9, bottom: 5 } },
                         e('defs', null,
                             e('linearGradient', { id: 'moodGradient', x1: '0', y1: '0', x2: '0', y2: '1' },
                                 e('stop', { offset: '0%', stopColor: '#3b82f6' }),
