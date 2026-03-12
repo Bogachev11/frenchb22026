@@ -1,0 +1,22 @@
+---
+description: After deploy to prod, verify the site works (no blank screen)
+globs: 
+alwaysApply: true
+---
+
+# Verify production after deploy
+
+This project is deployed to **https://frenchb22026.bogachev.fr** (GitHub Pages).
+
+## After any `git push` to main (deploy):
+
+1. **Confirm files on prod** (optional but recommended):
+   - `curl -s "https://frenchb22026.bogachev.fr/js/app.js" | head -3`
+   - If the response is not the expected app.js content, the deploy may not have completed yet; wait 1–2 min and retry.
+
+2. **Confirm the site is not broken:**
+   - Open https://frenchb22026.bogachev.fr in a browser (or use Playwright if available).
+   - The page must show the dashboard (header, KPI cards, charts or "Loading..."), **not** a blank/white screen.
+   - If the screen is blank: there is likely a runtime JS error (e.g. division by zero, undefined access). Check `deploy.md` and fix the code, then push again.
+
+3. **Do not tell the user "deploy done" without this check.** If you cannot open the URL, say: "Push выполнен. Пожалуйста, откройте https://frenchb22026.bogachev.fr и убедитесь, что дашборд отображается; если экран пустой — напишите, проверю код и консоль."

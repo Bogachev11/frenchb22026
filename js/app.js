@@ -12,14 +12,17 @@ const MoodDot = ({ cx, cy, value, index }) => {
     return e('circle', { key: index, cx, cy, r: 3, fill: getMoodColor(value), fillOpacity: 0.15 });
 };
 
-const FixedYAxis = ({ height, minY = 0, maxY, ticks, tickFormatter }) => e('div', {
-    className: 'relative text-[12px] text-gray-600 font-num flex-shrink-0',
-    style: { width: 28, height }
-}, ticks.map((v, i) => e('span', {
-    key: i,
-    className: 'absolute left-0',
-    style: { bottom: maxY != null ? `${((v - minY) / (maxY - minY)) * (100 - 12)}%` : 0, transform: 'translateY(50%)' }
-}, tickFormatter ? tickFormatter(v) : v)));
+const FixedYAxis = ({ height, minY = 0, maxY, ticks, tickFormatter }) => {
+    const range = (maxY != null && maxY > minY) ? (maxY - minY) : 1;
+    return e('div', {
+        className: 'relative text-[12px] text-gray-600 font-num flex-shrink-0',
+        style: { width: 28, height }
+    }, (ticks || []).map((v, i) => e('span', {
+        key: i,
+        className: 'absolute left-0',
+        style: { bottom: `${((v - minY) / range) * (100 - 12)}%`, transform: 'translateY(50%)' }
+    }, tickFormatter ? tickFormatter(v) : v)));
+};
 
 
 // --- App ---
