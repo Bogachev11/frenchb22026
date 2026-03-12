@@ -12,6 +12,15 @@ const MoodDot = ({ cx, cy, value, index }) => {
     return e('circle', { key: index, cx, cy, r: 3, fill: getMoodColor(value), fillOpacity: 0.15 });
 };
 
+const FixedYAxis = ({ height, minY = 0, maxY, ticks, tickFormatter }) => e('div', {
+    className: 'relative text-[12px] text-gray-600 font-num flex-shrink-0',
+    style: { width: 28, height }
+}, ticks.map((v, i) => e('span', {
+    key: i,
+    className: 'absolute left-0',
+    style: { bottom: maxY != null ? `${((v - minY) / (maxY - minY)) * (100 - 12)}%` : 0, transform: 'translateY(50%)' }
+}, tickFormatter ? tickFormatter(v) : v)));
+
 
 // --- App ---
 const getUpdateTimeText = (updateTime) => {
@@ -141,25 +150,47 @@ const App = () => {
             KPI(`${streaks}`, '4h Streaks')
         ),
 
-        // Chart 1: Podcasts & Films
-        e('div', { className: 'px-2 pb-1' },
-            e('div', { className: 'flex justify-between items-center px-2' },
-                e('div', { className: 'text-sm font-medium text-gray-700' },
-                    e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
-                    ' & ',
-                    e('span', { style: { color: '#F72585' } }, 'Films')
-                ),
-                e('div', { className: 'hidden md:flex text-xs rounded overflow-hidden border border-gray-300' },
-                    e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
-                    e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
-                )
+        // Chart titles (fixed, outside scroll)
+        e('div', { className: 'flex justify-between items-center px-2 pb-0.5' },
+            e('div', { className: 'text-sm font-medium text-gray-700' },
+                e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
+                ' & ',
+                e('span', { style: { color: '#F72585' } }, 'Films')
             ),
-            e('div', { style: { height: maxPF * pph + yPad } },
+            e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
+                e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
+                e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
+            )
+        ),
+        e('div', { className: 'text-sm font-medium text-gray-700 px-2 pb-0.5' },
+            e('span', { style: { color: '#4A2CF5' } }, 'Tutor'),
+            ' & ',
+            e('span', { style: { color: '#4CC9F0' } }, 'Homework')
+        ),
+        e('div', { className: 'text-sm font-medium text-gray-700 px-2 pb-0.5' },
+            e('span', { style: { color: '#9378FF' } }, 'Reading'),
+            ' & ',
+            e('span', { style: { color: '#4caf50' } }, 'Speaking')
+        ),
+        e('div', { className: 'px-2 pb-0.5' },
+            e('div', { className: 'text-sm font-medium text-gray-700' }, 'How I feel about my french'),
+            e('div', { className: 'text-xs text-gray-500' }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant')
+        ),
+
+        // Charts: horizontal scroll, fixed Y + legend; ~3 months visible, all in sync
+        e('div', { className: 'overflow-x-auto overflow-y-hidden', style: { WebkitOverflowScrolling: 'touch' } },
+            e('div', { className: 'flex flex-col', style: { minWidth: '400%' } },
+
+        e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
+            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
+                e(FixedYAxis, { height: maxPF * pph + yPad, maxY: maxPF, ticks: mkTicks(maxPF), tickFormatter: fmtH })
+            ),
+            e('div', { style: { flex: 1, minWidth: 0, height: maxPF * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: mg },
+                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 } },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, mkY(maxPF)),
+                        e(YAxis, { ...mkY(maxPF), width: 0, tick: false }),
                         e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '2 2', strokeWidth: 1.5 }),
                         e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: bSize }, cells),
                         e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: bSize }, cells),
@@ -169,19 +200,16 @@ const App = () => {
             )
         ),
 
-        // Chart 2: Tutor & Homework
-        e('div', { className: 'px-2 pb-1' },
-            e('div', { className: 'text-sm font-medium text-gray-700 px-2' },
-                e('span', { style: { color: '#4A2CF5' } }, 'Tutor'),
-                ' & ',
-                e('span', { style: { color: '#4CC9F0' } }, 'Homework')
+        e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
+            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
+                e(FixedYAxis, { height: maxTH * pph + yPad, maxY: maxTH, ticks: mkTicks(maxTH), tickFormatter: fmtH })
             ),
-            e('div', { style: { height: maxTH * pph + yPad } },
+            e('div', { style: { flex: 1, minWidth: 0, height: maxTH * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: mg },
+                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 } },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, mkY(maxTH)),
+                        e(YAxis, { ...mkY(maxTH), width: 0, tick: false }),
                         e(Bar, { dataKey: 'tutor', stackId: 'a', fill: '#4A2CF5', barSize: bSize }, cells),
                         e(Bar, { dataKey: 'homework', stackId: 'a', fill: '#4CC9F0', barSize: bSize }, cells)
                     )
@@ -189,19 +217,16 @@ const App = () => {
             )
         ),
 
-        // Chart 3: Reading & Speaking
-        e('div', { className: 'px-2 pb-1' },
-            e('div', { className: 'text-sm font-medium text-gray-700 px-2' },
-                e('span', { style: { color: '#9378FF' } }, 'Reading'),
-                ' & ',
-                e('span', { style: { color: '#4caf50' } }, 'Speaking')
+        e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
+            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
+                e(FixedYAxis, { height: maxRS * pph + yPad, maxY: maxRS, ticks: mkTicks(maxRS), tickFormatter: fmtH })
             ),
-            e('div', { style: { height: maxRS * pph + yPad } },
+            e('div', { style: { flex: 1, minWidth: 0, height: maxRS * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: mg },
+                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 } },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, mkY(maxRS)),
+                        e(YAxis, { ...mkY(maxRS), width: 0, tick: false }),
                         e(Bar, { dataKey: 'reading', stackId: 'a', fill: '#9378FF', barSize: bSize }, cells),
                         e(Bar, { dataKey: 'speaking', stackId: 'a', fill: '#4caf50', barSize: bSize }, cells)
                     )
@@ -209,13 +234,13 @@ const App = () => {
             )
         ),
 
-        // Chart 4: How I feel about my french
-        e('div', { className: 'px-2 pb-1' },
-            e('div', { className: 'text-sm font-medium text-gray-700 px-2' }, 'How I feel about my french'),
-            e('div', { className: 'text-xs text-gray-500 px-2 mb-1' }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant'),
-            e('div', { style: { height: 85 } },
+        e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
+            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
+                e(FixedYAxis, { height: 85, minY: 1, maxY: 5, ticks: [1, 2, 3, 4, 5] })
+            ),
+            e('div', { style: { flex: 1, minWidth: 0, height: 85 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(LineChart, { data: moodData, margin: { left: -5, right: 10, top: 9, bottom: 5 } },
+                    e(LineChart, { data: moodData, margin: { left: 0, right: 10, top: 9, bottom: 5 } },
                         e('defs', null,
                             e('linearGradient', { id: 'moodGradient', x1: '0', y1: '0', x2: '0', y2: '1' },
                                 e('stop', { offset: '0%', stopColor: '#3b82f6' }),
@@ -225,11 +250,14 @@ const App = () => {
                         ),
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
-                        e(YAxis, { width: yAxisW, domain: [1, 5], ticks: [1, 2, 3, 4, 5], axisLine: false, fontSize: 12 }),
+                        e(YAxis, { width: 0, tick: false, domain: [1, 5] }),
                         e(Line, { dataKey: 'mood', stroke: 'transparent', strokeWidth: 0, dot: MoodDot, isAnimationActive: false }),
                         e(Line, { type: 'monotone', dataKey: 'avg', stroke: 'url(#moodGradient)', strokeWidth: 4, dot: false, connectNulls: true })
                     )
                 )
+            )
+        ),
+
             )
         ),
 
