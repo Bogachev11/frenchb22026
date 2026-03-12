@@ -68,7 +68,7 @@ const App = () => {
     const data = raw.weekly;
     const barData = mode === 'W' ? data : raw.daily;
     const desktop = window.innerWidth >= 768;
-    const bSize = mode === 'D' ? (desktop ? 3 : 2) : (desktop ? 16 : 6);
+    const bSize = mode === 'D' ? (desktop ? 10 : 6) : (desktop ? 16 : 6);
 
     const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework + d.reading + d.speaking, 0);
     const avgH = cw > 0 ? total / (cw * 7) : 0;
@@ -94,6 +94,7 @@ const App = () => {
     const maxPF = ceilMax(barData.map(d => d.podcasts + d.films), mode === 'W' ? 5 : 1);
     const maxTH = ceilMax(barData.map(d => d.tutor + d.homework), 1);
     const maxRS = ceilMax(barData.map(d => d.reading + d.speaking), 1);
+    const maxPFW = ceilMax(data.map(d => d.podcasts + d.films), 5), maxTHW = ceilMax(data.map(d => d.tutor + d.homework), 1), maxRSW = ceilMax(data.map(d => d.reading + d.speaking), 1);
     const mkTicks = n => { const s = n > 4 ? 2 : 1, t = []; for (let i = 0; i <= n; i += s) t.push(i); return t; };
     const mkY = n => ({ width: yAxisW, domain: [0, n], ticks: mkTicks(n), axisLine: false, fontSize: 12, tickFormatter: fmtH });
     const cells = barData.map((d, i) => e(Cell, { key: i, fillOpacity: (d.wk ?? d.week) === cw ? 1 : 0.5 }));
@@ -153,20 +154,19 @@ const App = () => {
             KPI(`${streaks}`, '4h Streaks')
         ),
 
-        e('div', { className: 'flex justify-end px-2 pb-2' },
-            e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
-                e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
-                e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
-            )
-        ),
-
         mode === 'W'
             ? e('div', { className: 'flex flex-col gap-4' },
                 e('div', null,
-                    e('div', { className: 'text-sm font-medium text-gray-700 px-2 pb-0.5' },
-                        e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
-                        ' & ',
-                        e('span', { style: { color: '#F72585' } }, 'Films')
+                    e('div', { className: 'flex justify-between items-center px-2 pb-0.5' },
+                        e('div', { className: 'text-sm font-medium text-gray-700' },
+                            e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
+                            ' & ',
+                            e('span', { style: { color: '#F72585' } }, 'Films')
+                        ),
+                        e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
+                            e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
+                            e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
+                        )
                     ),
                     e('div', { style: { height: maxPF * pph + yPad } },
                         e(ResponsiveContainer, { width: '100%', height: '100%' },
@@ -244,12 +244,26 @@ const App = () => {
             : e('div', { className: 'overflow-x-auto overflow-y-hidden', style: { WebkitOverflowScrolling: 'touch' } },
                 e('div', { className: 'flex flex-col', style: { minWidth: '400%' } },
         e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
-            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
-                e(FixedYAxis, { height: maxPF * pph + yPad, maxY: maxPF, ticks: mkTicks(maxPF), tickFormatter: fmtH })
+            e('div', { className: 'sticky left-0 z-10 bg-white flex flex-shrink-0', style: { width: 160 } },
+                e('div', { className: 'flex justify-between items-center pb-0.5', style: { width: 132 } },
+                    e('div', { className: 'text-sm font-medium text-gray-700' },
+                        e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
+                        ' & ',
+                        e('span', { style: { color: '#F72585' } }, 'Films'
+                    ),
+                    e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
+                        e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
+                        e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
+                    )
+                ),
+                e('div', { className: 'flex' },
+                    e('div', { style: { width: 132 } }),
+                    e(FixedYAxis, { height: maxPFW * pph + yPad - 24, maxY: maxPF, ticks: mkTicks(maxPF), tickFormatter: fmtH })
+                )
             ),
-            e('div', { style: { flex: 1, minWidth: 0, height: maxPF * pph + yPad } },
+            e('div', { style: { flex: 1, minWidth: 0, height: maxPFW * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 } },
+                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 }, barCategoryGap: 0, barGap: 0 },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { ...mkY(maxPF), width: 0, tick: false }),
@@ -263,12 +277,20 @@ const App = () => {
         ),
 
         e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
-            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
-                e(FixedYAxis, { height: maxTH * pph + yPad, maxY: maxTH, ticks: mkTicks(maxTH), tickFormatter: fmtH })
+            e('div', { className: 'sticky left-0 z-10 bg-white flex flex-shrink-0', style: { width: 160 } },
+                e('div', { className: 'text-sm font-medium text-gray-700 pb-0.5', style: { width: 132 } },
+                    e('span', { style: { color: '#4A2CF5' } }, 'Tutor'),
+                    ' & ',
+                    e('span', { style: { color: '#4CC9F0' } }, 'Homework'
+                ),
+                e('div', { className: 'flex' },
+                    e('div', { style: { width: 132 } }),
+                    e(FixedYAxis, { height: maxTHW * pph + yPad - 24, maxY: maxTH, ticks: mkTicks(maxTH), tickFormatter: fmtH })
+                )
             ),
-            e('div', { style: { flex: 1, minWidth: 0, height: maxTH * pph + yPad } },
+            e('div', { style: { flex: 1, minWidth: 0, height: maxTHW * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 } },
+                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 }, barCategoryGap: 0, barGap: 0 },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { ...mkY(maxTH), width: 0, tick: false }),
@@ -280,12 +302,20 @@ const App = () => {
         ),
 
         e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
-            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
-                e(FixedYAxis, { height: maxRS * pph + yPad, maxY: maxRS, ticks: mkTicks(maxRS), tickFormatter: fmtH })
+            e('div', { className: 'sticky left-0 z-10 bg-white flex flex-shrink-0', style: { width: 160 } },
+                e('div', { className: 'text-sm font-medium text-gray-700 pb-0.5', style: { width: 132 } },
+                    e('span', { style: { color: '#9378FF' } }, 'Reading'),
+                    ' & ',
+                    e('span', { style: { color: '#4caf50' } }, 'Speaking'
+                ),
+                e('div', { className: 'flex' },
+                    e('div', { style: { width: 132 } }),
+                    e(FixedYAxis, { height: maxRSW * pph + yPad - 24, maxY: maxRS, ticks: mkTicks(maxRS), tickFormatter: fmtH })
+                )
             ),
-            e('div', { style: { flex: 1, minWidth: 0, height: maxRS * pph + yPad } },
+            e('div', { style: { flex: 1, minWidth: 0, height: maxRSW * pph + yPad } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
-                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 } },
+                    e(ComposedChart, { data: barData, margin: { ...mg, left: 0 }, barCategoryGap: 0, barGap: 0 },
                         e(CartesianGrid, { vertical: false }),
                         e(XAxis, xProps),
                         e(YAxis, { ...mkY(maxRS), width: 0, tick: false }),
@@ -297,8 +327,13 @@ const App = () => {
         ),
 
         e('div', { className: 'flex px-2 pb-1', style: { minWidth: '100%' } },
-            e('div', { className: 'sticky left-0 z-10 bg-white pr-1', style: { width: 28 } },
-                e(FixedYAxis, { height: 85, minY: 1, maxY: 5, ticks: [1, 2, 3, 4, 5] })
+            e('div', { className: 'sticky left-0 z-10 bg-white flex flex-shrink-0', style: { width: 160 } },
+                e('div', { className: 'text-sm font-medium text-gray-700 pb-0.5', style: { width: 132 } }, 'How I feel about my french'),
+                e('div', { className: 'text-xs text-gray-500 pb-0.5', style: { width: 132 } }, '1 \u2013 total disaster, 5 \u2013 absolutely brilliant'),
+                e('div', { className: 'flex' },
+                    e('div', { style: { width: 132 } }),
+                    e(FixedYAxis, { height: 85 - 36, minY: 1, maxY: 5, ticks: [1, 2, 3, 4, 5] })
+                )
             ),
             e('div', { style: { flex: 1, minWidth: 0, height: 85 } },
                 e(ResponsiveContainer, { width: '100%', height: '100%' },
