@@ -15,3 +15,10 @@
 .recharts-cartesian-grid-vertical line { stroke: #f9fafb; stroke-width: 1; }
 
 .recharts-bar { stroke-width: 0; }
+
+/* Скрыть полосу прокрутки, оставить скролл по тачу/колёсику */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
