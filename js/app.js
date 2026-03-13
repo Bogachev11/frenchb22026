@@ -127,6 +127,7 @@ const App = () => {
         );
     };
 
+    const pfTitle = e('div', { className: 'text-sm font-medium text-gray-700' }, e('span', { style: { color: '#5189E9' } }, 'Podcasts'), ' & ', e('span', { style: { color: '#F72585' } }, 'Films'));
     return e('div', { className: 'max-w-md md:max-w-[1000px] mx-auto bg-white min-h-screen border border-gray-300 px-1' },
 
         // Header
@@ -161,11 +162,7 @@ const App = () => {
             ? e('div', { className: 'flex flex-col gap-4' },
                 e('div', null,
                     e('div', { className: 'flex justify-between items-center px-2 pb-0.5' },
-                        e('div', { className: 'text-sm font-medium text-gray-700' },
-                            e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
-                            ' & ',
-                            e('span', { style: { color: '#F72585' } }, 'Films')
-                        ),
+                        pfTitle,
                         e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
                             e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
                             e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
