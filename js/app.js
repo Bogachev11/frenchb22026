@@ -252,7 +252,8 @@ const App = () => {
                     e('div', { className: 'text-sm font-medium text-gray-700' },
                         e('span', { style: { color: '#5189E9' } }, 'Podcasts'),
                         ' & ',
-                        e('span', { style: { color: '#F72585' } }, 'Films'
+                        e('span', { style: { color: '#F72585' } }, 'Films')
+                    )
                     ),
                     e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
                         e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
@@ -356,8 +357,8 @@ const App = () => {
                     )
                 )
             )
-        ),
-
+        )
+        )
         )
             ),
 
