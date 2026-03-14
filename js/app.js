@@ -129,7 +129,11 @@ const App = () => {
         e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
         e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
     );
-    const h1 = (maxPFH * pph + yPad) * 0.9, h2 = (maxTHH * pph + yPad) * 0.9, h3 = (maxRSH * pph + yPad) * 0.9, h4 = 85;
+    // D: высоты по daily max → один и тот же pph на всех трёх. W: по недельным.
+    const h1 = mode === 'D' ? (maxPF * pph + yPad) : (maxPFH * pph + yPad) * 0.9;
+    const h2 = mode === 'D' ? (maxTH * pph + yPad) : (maxTHH * pph + yPad) * 0.9;
+    const h3 = mode === 'D' ? (maxRS * pph + yPad) : (maxRSH * pph + yPad) * 0.9;
+    const h4 = 85;
     const charts = [
         e(ResponsiveContainer, { width: '100%', height: '100%' },
             e(ComposedChart, { data: chartData, margin: mg },
