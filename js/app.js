@@ -102,8 +102,11 @@ const App = () => {
         if (mode !== 'W' || typeof ANNOTATIONS === 'undefined' || !ANNOTATIONS.PF) return null;
         const xa = props.xAxisMap && Object.values(props.xAxisMap)[0];
         const ya = props.yAxisMap && Object.values(props.yAxisMap)[0];
-        if (!xa || !ya || !xa.scale || !ya.scale) return null;
+        const yScale = ya && (ya.realScale || ya.scale);
+        if (!xa || !ya || !yScale || typeof yScale !== 'function') return null;
         const lineHeight = 14;
+        const s0 = yScale(0), sMax = yScale(maxPF);
+        const zeroAtBottom = s0 > sMax;
         return e('g', null,
             Object.entries(ANNOTATIONS.PF).map(([wk, val]) => {
                 const ww = +wk;
@@ -113,8 +116,10 @@ const App = () => {
                 const txt = (item.text || '').replace(/<br\s*\/?>/gi, '\n');
                 const lines = txt.split('\n');
                 const yVal = item.anchor === 'podcasts' ? row.podcasts : (row.podcasts + row.films);
-                const y = ya.scale(yVal) + 2;
-                const x = xa.scale(ww) + (desktop ? 10 : 6);
+                const py = yScale(yVal);
+                const y = zeroAtBottom ? py + 2 : py - 2 - (lines.length * lineHeight);
+                const xScale = xa.realScale || xa.scale;
+                const x = (typeof xScale === 'function' ? xScale(ww) : xa.scale(ww)) + (desktop ? 10 : 6);
                 return e('text', {
                     key: `pfn-${wk}`,
                     x,
