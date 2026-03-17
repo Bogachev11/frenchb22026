@@ -2,7 +2,7 @@
 // anchor: 'top' — к верхнему краю столбика (podcasts+films), 'podcasts' — к верху только подкаст-части
 const ANNOTATIONS = {
     PF: {
-        5: { text: 'Rings\n\nof power', anchor: 'podcasts' },
-        9: 'InnerFrench'
+        5: { text: 'Rings\n\nof power' },
+        9: { text: 'InnerFrench', anchor: 'podcasts' },
     }
 };
