@@ -1,8 +1,8 @@
+// PF: week -> string (переносы: \n или <br>) или { text: string, anchor?: 'top' | 'podcasts' }
+// anchor: 'top' — к верхнему краю столбика (podcasts+films), 'podcasts' — к верху только подкаст-части
 const ANNOTATIONS = {
-    // Week -> note text (Podcasts & Films, weekly mode)
     PF: {
-        5: 'Rings of power',
-        8: 'HiJack',
+        5: { text: 'Rings\n\nof power', anchor: 'podcasts' },
         9: 'InnerFrench'
     }
 };

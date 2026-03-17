@@ -103,15 +103,22 @@ const App = () => {
         const xa = props.xAxisMap && Object.values(props.xAxisMap)[0];
         const ya = props.yAxisMap && Object.values(props.yAxisMap)[0];
         if (!xa || !ya || !xa.scale || !ya.scale) return null;
+        const lineHeight = 14;
         return e('g', null,
-            Object.entries(ANNOTATIONS.PF).map(([wk, txt]) => {
+            Object.entries(ANNOTATIONS.PF).map(([wk, val]) => {
                 const ww = +wk;
                 const row = data.find(d => d.week === ww);
                 if (!row) return null;
+                const item = typeof val === 'string' ? { text: val, anchor: 'top' } : val;
+                const txt = (item.text || '').replace(/<br\s*\/?>/gi, '\n');
+                const lines = txt.split('\n');
+                const yVal = item.anchor === 'podcasts' ? row.podcasts : (row.podcasts + row.films);
+                const y = ya.scale(yVal) + 2;
+                const x = xa.scale(ww) + (desktop ? 10 : 6);
                 return e('text', {
                     key: `pfn-${wk}`,
-                    x: xa.scale(ww) + (desktop ? 10 : 6),
-                    y: ya.scale(row.podcasts + row.films) + 2,
+                    x,
+                    y,
                     fill: '#111',
                     stroke: '#fff',
                     strokeWidth: 3,
@@ -119,7 +126,7 @@ const App = () => {
                     fontSize: 12,
                     dominantBaseline: 'hanging',
                     textAnchor: 'start'
-                }, txt);
+                }, lines.map((line, i) => e('tspan', { key: i, x, dy: i === 0 ? 0 : lineHeight }, line)));
             })
         );
     };
