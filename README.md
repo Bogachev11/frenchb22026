@@ -37,7 +37,7 @@ Zero build system. Static files + CDN.
 ├── index.html                        # Entry point, loads all libraries and scripts
 ├── styles.css                        # Custom CSS for Recharts axis/grid styling
 ├── recharts.js                       # Recharts library (local, committed to repo)
-├── env.local.js                      # Optional local API key (committed placeholder; do not commit secrets)
+├── env.local.example.js              # Stub copied to env.local.js on deploy; locally use npm run env:local
 ├── update-log.json                   # Last update timestamp + cached data (auto-generated)
 ├── CNAME                             # Custom domain: frenchb22026.bogachev.fr
 ├── js/
@@ -141,17 +141,32 @@ Google Sheets (you edit manually)
 git clone https://github.com/Bogachev11/frenchb22026.git
 cd frenchb22026
 
-# 2. For local Sheets API: edit env.local.js and uncomment/set window.__API_KEY__ (do not commit real keys)
+# 2. Same API key as on GitHub (Settings → Secrets → GOOGLE_API_KEY). Writes gitignored env.local.js:
+#    PowerShell: $env:GOOGLE_API_KEY="paste-your-key-here" ; npm run env:local
 
-# 3. Start local server
-npx http-server . -p 3002 -c-1
+# 3. Install deps (once), then start local server (opens browser on http://127.0.0.1:3045 )
+npm install
+npm run dev
 
-# 4. Open http://127.0.0.1:3002
+# If the browser does not open, go manually to: http://127.0.0.1:3045/
+# If `localhost` fails, always use `127.0.0.1` (Windows sometimes resolves localhost oddly).
+# Without auto-open: npm run dev:noopen
 ```
 
+**Playwright-проверка** (пока в другом терминале запущен `npm run dev:noopen`):
+
+```bash
+npm run check:page
+# или: node scripts/playwright-check-page.js http://127.0.0.1:3045/
+```
+
+Скрипт выводит статус ответа Google Sheets. **403 локально** — как правило пустой ключ в `env.local.js` или в Google Cloud для ключа с ограничением по сайтам не указаны referrers `http://127.0.0.1:3045/*` и `http://localhost:3045/*`. Если сменили порт dev-сервера (например с 3000 на 3045), **referrer в списке должен совпадать с тем, что в адресной строке** — иначе Google отдаёт 403, хотя раньше «всё работало».
+
+Сообщения **`runtime.lastError` / message port** в консоли обычного Chrome обычно от **расширений**, не от кода сайта; в Playwright (чистый Chromium) их нет.
+
 **How API key works locally vs prod:**
-- **Local:** uncomment and set `window.__API_KEY__` in `env.local.js`, or use `git update-index --skip-worktree env.local.js` after editing so the key is not committed
-- **Prod:** `deploy.yml` runs `sed` to replace placeholder in `index.html` with value from `GOOGLE_API_KEY` secret; `env.local.js` is a no-op placeholder so the script tag does not 404
+- **Local:** `npm run env:local` (with `GOOGLE_API_KEY` in the environment) writes `env.local.js` (gitignored) with `window.__API_KEY__`.
+- **Prod:** `deploy.yml` copies `env.local.example.js` → `env.local.js` (avoids 404) and runs `sed` to inject the key into `index.html` from the `GOOGLE_API_KEY` secret.
 
 ---
 

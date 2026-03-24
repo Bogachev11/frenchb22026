@@ -12,6 +12,8 @@ jobs:
       id-token: write
     steps:
     - uses: actions/checkout@v4
+    - name: Place env.local.js stub (avoids 404; key is in index.html)
+      run: cp env.local.example.js env.local.js
     - name: Inject API key
       run: |
         sed -i "s#window.__API_KEY__ = window.__API_KEY__ || undefined;#window.__API_KEY__ = '${{ secrets.GOOGLE_API_KEY }}';#g" index.html

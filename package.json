@@ -4,7 +4,13 @@
   "description": "",
   "main": "recharts.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "http-server . -a 127.0.0.1 -p 3045 -c-1 -o",
+    "start": "http-server . -a 127.0.0.1 -p 3045 -c-1 -o",
+    "dev:noopen": "http-server . -a 127.0.0.1 -p 3045 -c-1",
+    "check:page": "node scripts/playwright-check-page.js",
+    "check:prod": "node scripts/playwright-check-page.js https://frenchb22026.bogachev.fr/",
+    "env:local": "node scripts/set-local-api-key.js"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +19,8 @@
   "dependencies": {
     "@playwright/test": "^1.58.2",
     "playwright": "^1.58.2"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
   }
 }
