@@ -37,7 +37,7 @@ Zero build system. Static files + CDN.
 ├── index.html                        # Entry point, loads all libraries and scripts
 ├── styles.css                        # Custom CSS for Recharts axis/grid styling
 ├── recharts.js                       # Recharts library (local, committed to repo)
-├── env.local.js                      # API key for local dev (GITIGNORED)
+├── env.local.js                      # Optional local API key (committed placeholder; do not commit secrets)
 ├── update-log.json                   # Last update timestamp + cached data (auto-generated)
 ├── CNAME                             # Custom domain: frenchb22026.bogachev.fr
 ├── js/
@@ -141,8 +141,7 @@ Google Sheets (you edit manually)
 git clone https://github.com/Bogachev11/frenchb22026.git
 cd frenchb22026
 
-# 2. Create env.local.js (gitignored) with your API key
-echo "window.__API_KEY__ = 'YOUR_GOOGLE_API_KEY';" > env.local.js
+# 2. For local Sheets API: edit env.local.js and uncomment/set window.__API_KEY__ (do not commit real keys)
 
 # 3. Start local server
 npx http-server . -p 3002 -c-1
@@ -151,8 +150,8 @@ npx http-server . -p 3002 -c-1
 ```
 
 **How API key works locally vs prod:**
-- **Local:** `env.local.js` sets `window.__API_KEY__` (file is gitignored, never committed)
-- **Prod:** `deploy.yml` runs `sed` to replace placeholder in `index.html` with value from `GOOGLE_API_KEY` secret
+- **Local:** uncomment and set `window.__API_KEY__` in `env.local.js`, or use `git update-index --skip-worktree env.local.js` after editing so the key is not committed
+- **Prod:** `deploy.yml` runs `sed` to replace placeholder in `index.html` with value from `GOOGLE_API_KEY` secret; `env.local.js` is a no-op placeholder so the script tag does not 404
 
 ---
 
