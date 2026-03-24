@@ -67,9 +67,10 @@ const App = () => {
     const desktop = window.innerWidth >= 768;
     const bSize = mode === 'D' ? (desktop ? 10 : 6) : (desktop ? 16 : 6);
 
-    const total = data.reduce((s, d) => s + d.podcasts + d.films + d.tutor + d.homework + d.reading + d.speaking + (d.words || 0), 0);
+    const pfTotal = (d) => (d.podcasts || 0) + (d.films || 0) + (d.radio || 0);
+    const total = data.reduce((s, d) => s + pfTotal(d) + d.tutor + d.homework + d.reading + d.speaking + (d.words || 0), 0);
     const avgH = cw > 0 ? total / (cw * 7) : 0;
-    const streaks = data.filter(d => (d.podcasts + d.films) >= 4).length;
+    const streaks = data.filter(d => pfTotal(d) >= 4).length;
 
     // Mood data: daily dots + 7-day rolling average
     const moodData = [], moodBuf = [];
@@ -83,18 +84,18 @@ const App = () => {
         moodData.push(entry);
     });
 
-    const chartData = barData.length > 0 ? barData : [{ week: 1, podcasts: 0, films: 0, tutor: 0, homework: 0, reading: 0, speaking: 0, words: 0 }];
+    const chartData = barData.length > 0 ? barData : [{ week: 1, podcasts: 0, films: 0, radio: 0, tutor: 0, homework: 0, reading: 0, speaking: 0, words: 0 }];
     const moodChartData = moodData.length > 0 ? moodData : [{ week: 1, mood: null, avg: null }];
     const xProps = { type: 'number', dataKey: 'week', domain: [1, 52], ticks: MONTH_TICKS, tickFormatter: fmtMonth };
     const mg = { left: 2, right: 10, top: 5, bottom: 0 };
     const yAxisW = 28;
     const pph = 20, yPad = 30; // pixels per hour + fixed overhead (margins + X-axis labels)
     const ceilMax = (vals, min) => Math.max(min, Math.ceil(Math.max(...vals, 0)));
-    const maxPF = ceilMax(barData.map(d => d.podcasts + d.films), 5);
+    const maxPF = ceilMax(barData.map(pfTotal), 5);
     const maxTH = ceilMax(barData.map(d => d.tutor + d.homework), 1);
     const maxRS = ceilMax(barData.map(d => (d.reading || 0) + (d.speaking || 0) + (d.words || 0)), 1);
     // Высоты контейнеров графиков одинаковы в W и D (по недельной шкале)
-    const maxPFH = ceilMax(data.map(d => d.podcasts + d.films), 5), maxTHH = ceilMax(data.map(d => d.tutor + d.homework), 1), maxRSH = ceilMax(data.map(d => (d.reading || 0) + (d.speaking || 0) + (d.words || 0)), 1);
+    const maxPFH = ceilMax(data.map(pfTotal), 5), maxTHH = ceilMax(data.map(d => d.tutor + d.homework), 1), maxRSH = ceilMax(data.map(d => (d.reading || 0) + (d.speaking || 0) + (d.words || 0)), 1);
     const mkTicks = n => { const s = n > 4 ? 2 : 1, t = []; for (let i = 0; i <= n; i += s) t.push(i); return t; };
     const mkY = n => ({ width: yAxisW, domain: [0, n], ticks: mkTicks(n), axisLine: false, fontSize: 12, tickFormatter: fmtH });
     const cells = chartData.map((d, i) => e(Cell, { key: i, fillOpacity: (d.wk ?? d.week) === cw ? 1 : 0.5 }));
@@ -136,7 +137,9 @@ const App = () => {
         );
     };
 
-    const pfTitle = e('div', { className: 'text-sm font-medium font-bold text-gray-700' }, e('span', { style: { color: '#5189E9' } }, 'Podcasts'), ' & ', e('span', { style: { color: '#F72585' } }, 'Films'));
+    const pfTitle = e('div', { className: 'text-sm font-medium font-bold text-gray-700' },
+        e('span', { style: { color: '#5189E9' } }, 'Podcasts'), ', ', e('span', { style: { color: '#F72585' } }, 'Films'), ' & ',
+        e('span', { style: { color: '#9ca3af' } }, 'Other listening'));
     const modeToggle = e('div', { className: 'flex text-xs rounded overflow-hidden border border-gray-300' },
         e('button', { className: `px-1.5 py-0.5 ${mode === 'W' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('W') }, 'W'),
         e('button', { className: `px-1.5 py-0.5 ${mode === 'D' ? 'bg-gray-800 text-white' : 'text-gray-400'}`, onClick: () => setMode('D') }, 'D')
@@ -155,6 +158,7 @@ const App = () => {
                 ...(mode === 'W' ? [e(ReferenceLine, { y: 4, stroke: '#e91e63', strokeDasharray: '2 2', strokeWidth: 1.5 })] : []),
                 e(Bar, { dataKey: 'podcasts', stackId: 'a', fill: '#5189E9', barSize: bSize }, cells),
                 e(Bar, { dataKey: 'films', stackId: 'a', fill: '#F72585', barSize: bSize }, cells),
+                e(Bar, { dataKey: 'radio', stackId: 'a', fill: '#d1d5db', barSize: bSize }, cells),
                 e(Customized, { component: PFNotesLayer })
             )
         ),
