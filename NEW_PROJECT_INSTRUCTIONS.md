@@ -607,11 +607,11 @@ cd NEW_REPO_NAME
 npm install
 
 # Запустить локальный сервер
-python -m http.server 3000
+python -m http.server 3045
 # или
-npx http-server -p 3000
+npx http-server -p 3045
 
-# Открыть: http://localhost:3000
+# Открыть: http://localhost:3045
 ```
 
 ### package.json (минимальный)
@@ -623,8 +623,8 @@ npx http-server -p 3000
   "description": "Personal tracking dashboard",
   "main": "index.html",
   "scripts": {
-    "start": "python -m http.server 3000",
-    "dev": "python -m http.server 3000",
+    "start": "python -m http.server 3045",
+    "dev": "python -m http.server 3045",
     "deploy": "gh-pages -d .",
     "screenshot": "node scripts/screenshot.js"
   },

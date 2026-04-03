@@ -284,7 +284,7 @@ const App = () => {
             ),
             KPI(`${Math.round(total)}h`, 'Total Hours'),
             KPI(fmtH(avgH), 'Avg/Day'),
-            KPI(`${streaks}`, '4h Streaks')
+            KPI(`\u26A1${streaks}`, '4h Streaks')
         ),
 
         chartsContent,

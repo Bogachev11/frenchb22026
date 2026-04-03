@@ -12,17 +12,17 @@ const fetchData = async () => {
         const wk = weekOfYear(row[0]);
         const date = new Date(row[0]);
         const dow = (date.getDay() + 6) % 7; // 0=Mon, 6=Sun
-        // A date, B–I как раньше, J Radio (Other listening)
+        // A date, B–I как раньше, J Radio (Other listening). G = speaking (min), H = reading (min)
         const p = (parseFloat(row[1]) || 0), f = (parseFloat(row[2]) || 0),
               t = (parseFloat(row[3]) || 0), h = (parseFloat(row[4]) || 0),
-              r = (parseFloat(row[6]) || 0), s = (parseFloat(row[7]) || 0), words = (parseFloat(row[8]) || 0),
+              speakMin = (parseFloat(row[6]) || 0), readMin = (parseFloat(row[7]) || 0), words = (parseFloat(row[8]) || 0),
               rad = (parseFloat(row[9]) || 0);
         const mood = (row[5] !== undefined && row[5] !== '') ? parseFloat(row[5]) : null;
-        daily.push({ week: wk + dow / 7, wk, podcasts: p/60, films: f/60, radio: rad/60, tutor: t/60, homework: h/60, reading: r/60, speaking: s/60, words: words/60, mood });
+        daily.push({ week: wk + dow / 7, wk, podcasts: p/60, films: f/60, radio: rad/60, tutor: t/60, homework: h/60, reading: readMin/60, speaking: speakMin/60, words: words/60, mood });
 
         if (!weeks[wk]) weeks[wk] = { podcasts: 0, movies: 0, radio: 0, tutor: 0, homework: 0, reading: 0, speaking: 0, words: 0, moods: [] };
         const w = weeks[wk];
-        w.podcasts += p; w.movies += f; w.tutor += t; w.homework += h; w.reading += r; w.speaking += s; w.words += words; w.radio += rad;
+        w.podcasts += p; w.movies += f; w.tutor += t; w.homework += h; w.reading += readMin; w.speaking += speakMin; w.words += words; w.radio += rad;
         if (row[5] !== undefined && row[5] !== '') w.moods.push(parseFloat(row[5]));
     });
 
